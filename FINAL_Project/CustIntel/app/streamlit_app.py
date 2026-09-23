@@ -6,6 +6,7 @@ Run:
 """
 
 import json
+import os
 import sys
 from pathlib import Path
 
@@ -314,10 +315,19 @@ elif page == "Voice of Customer":
 elif page == "Business Chatbot":
     st.header("💬 Business Chatbot")
     st.write(
-        "Ask questions such as: "
-        "`Why is churn high?`, `What categories have the highest sales?`, "
-        "`What is the average review score?`, or `What is customer LTV?`"
+        "Ask anything about the business — revenue, categories, churn, LTV, "
+        "reviews, specific customers, model performance, trends, comparisons — "
+        "in plain English. The chatbot is an AI agent that queries the live "
+        "database itself, so it isn't limited to a fixed list of questions."
     )
+
+    if not os.environ.get("GOOGLE_API_KEY") and not os.environ.get("GEMINI_API_KEY"):
+        st.warning(
+            "No `GOOGLE_API_KEY` is set, so the chatbot is running in a "
+            "limited offline mode (churn / reviews / sales / LTV basics only). "
+            "Set that environment variable and `pip install google-genai` to "
+            "enable the full ask-anything AI agent."
+        )
 
     if "messages" not in st.session_state:
         st.session_state.messages = []
@@ -337,12 +347,20 @@ elif page == "Business Chatbot":
         with st.chat_message("user"):
             st.markdown(question)
 
-        answer = answer_question(question)
-
         with st.chat_message("assistant"):
+            with st.spinner("Analyzing..."):
+                # Pass prior turns (everything before this question) so the
+                # agent can handle follow-ups like "and last quarter?".
+                history = st.session_state.messages[:-1]
+                answer = answer_question(question, history=history)
             st.markdown(answer)
 
         st.session_state.messages.append({
             "role": "assistant",
             "content": answer,
         })
+
+    if st.session_state.messages:
+        if st.button("Clear conversation"):
+            st.session_state.messages = []
+            st.rerun()
