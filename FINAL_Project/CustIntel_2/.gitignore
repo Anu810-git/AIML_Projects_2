@@ -1,0 +1,13 @@
+.venv/
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+.env
+
+# Raw data, the built database, trained models and generated reports are all
+# reproducible by re-running the pipeline, so they are not committed to git.
+data/raw/*.csv
+database/*.db
+models/*.joblib
+reports/*.json
+reports/*.csv
